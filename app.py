@@ -33,14 +33,10 @@ THEME = {
     "blue": "#5b8bff", "violet": "#a78bfa", "amber": "#ff9d4d",
 }
 
-# -----------------------------------------------------------------------------
-# GLOBAL CSS
-# -----------------------------------------------------------------------------
 st.markdown(
     """
     <style>
       @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@500;600;700&display=swap');
-
       :root {
         --bg:#03050b; --bg2:#050814; --panel:rgba(10,17,32,.72);
         --panel-solid:#0b1220; --line:rgba(120,180,255,.18);
@@ -49,10 +45,8 @@ st.markdown(
         --cyan:#00f3ff; --cyan2:#38cfe0; --blue:#5b8bff;
         --violet:#a78bfa; --amber:#ff9d4d;
       }
-
       html, body, [class*="css"] { font-family:'Inter',sans-serif; }
       .stApp { background:transparent; color:var(--text); }
-
       [data-testid="stAppViewContainer"] {
         background:
           radial-gradient(ellipse 1200px 800px at 15% 10%, rgba(60,110,220,.16), transparent 60%),
@@ -62,8 +56,7 @@ st.markdown(
         position:relative;
       }
       [data-testid="stAppViewContainer"]::after {
-        content:"";
-        position:fixed; top:50%; left:50%;
+        content:""; position:fixed; top:50%; left:50%;
         width:160vmax; height:160vmax;
         transform:translate(-50%,-50%);
         background:
@@ -73,47 +66,33 @@ st.markdown(
             rgba(167,139,250,.00) 90deg, rgba(167,139,250,.055) 160deg,
             rgba(0,243,255,.00) 220deg, rgba(0,243,255,.045) 300deg,
             rgba(167,139,250,.00) 360deg);
-        border-radius:50%;
-        z-index:0; pointer-events:none;
-        animation:accretionSpin 180s linear infinite;
-        opacity:.85;
-        filter:blur(28px);
+        border-radius:50%; z-index:0; pointer-events:none;
+        animation:accretionSpin 180s linear infinite; opacity:.85; filter:blur(28px);
       }
       @keyframes accretionSpin { to { transform:translate(-50%,-50%) rotate(360deg); } }
-
       @media (prefers-reduced-motion: reduce) {
         [data-testid="stAppViewContainer"]::after { animation:none; }
         * { transition:none !important; animation:none !important; }
       }
-
       [data-testid="stHeader"] { background:rgba(3,5,11,.7); backdrop-filter:blur(6px); }
       [data-testid="stMainBlockContainer"], [data-testid="stSidebar"] { position:relative; z-index:1; }
-
       [data-testid="stSidebar"] {
         background:linear-gradient(180deg, rgba(3,6,14,.94), rgba(6,12,24,.94));
-        border-right:1px solid var(--line);
-        backdrop-filter:blur(18px);
+        border-right:1px solid var(--line); backdrop-filter:blur(18px);
       }
       [data-testid="stSidebar"] * { color:var(--text); }
-
       h1,h2,h3 { color:#f3f8ff; letter-spacing:-.02em; }
       h1,h2,h3,.eyebrow,.section-kicker,.brand { font-family:'Rajdhani','Orbitron',sans-serif; }
       p, li, label { color:#c8d5e8; }
       hr { border-color:var(--line); }
       a { color:var(--cyan) !important; }
       code { color:var(--cyan); background:rgba(0,243,255,.08); padding:1px 5px; border-radius:4px; }
-
       .hero {
         position:relative; padding:2rem 2.1rem 1.9rem;
-        border:1px solid var(--line-hi);
-        border-radius:14px;
+        border:1px solid var(--line-hi); border-radius:14px;
         background:linear-gradient(125deg, rgba(14,26,48,.9), rgba(6,12,26,.86));
-        backdrop-filter:blur(14px);
-        margin-bottom:1.4rem;
-        overflow:hidden;
-        box-shadow:0 0 0 1px rgba(0,243,255,.06) inset,
-                   0 0 40px rgba(0,180,220,.08),
-                   0 20px 60px -20px rgba(0,0,0,.9);
+        backdrop-filter:blur(14px); margin-bottom:1.4rem; overflow:hidden;
+        box-shadow:0 0 0 1px rgba(0,243,255,.06) inset, 0 0 40px rgba(0,180,220,.08), 0 20px 60px -20px rgba(0,0,0,.9);
       }
       .hero::before, .hero::after {
         content:""; position:absolute; width:26px; height:26px;
@@ -122,16 +101,12 @@ st.markdown(
       .hero::before { top:10px; left:10px; border-right:none; border-bottom:none; }
       .hero::after  { bottom:10px; right:10px; border-left:none; border-top:none; }
       .hero h1 {
-        font-family:'Orbitron',sans-serif;
-        font-weight:700;
-        font-size:clamp(1.7rem,3.1vw,2.7rem);
-        line-height:1.05; margin:.7rem 0 .85rem;
+        font-family:'Orbitron',sans-serif; font-weight:700;
+        font-size:clamp(1.7rem,3.1vw,2.7rem); line-height:1.05; margin:.7rem 0 .85rem;
         background:linear-gradient(100deg,#eaf6ff 0%,#7de9ff 45%,#c9b5ff 100%);
-        -webkit-background-clip:text; background-clip:text; color:transparent;
-        letter-spacing:-.015em;
+        -webkit-background-clip:text; background-clip:text; color:transparent; letter-spacing:-.015em;
       }
       .hero p { max-width:880px; color:#b9c8de; font-size:.95rem; line-height:1.7; }
-
       .eyebrow {
         color:var(--cyan); font-family:'Orbitron',sans-serif;
         font-size:.68rem; letter-spacing:.22em; text-transform:uppercase;
@@ -143,7 +118,6 @@ st.markdown(
         animation:pulseDot 2s ease-in-out infinite;
       }
       @keyframes pulseDot { 0%,100%{opacity:1;transform:scale(1);} 50%{opacity:.4;transform:scale(.75);} }
-
       .section-kicker {
         color:var(--cyan); font-family:'Orbitron',sans-serif;
         text-transform:uppercase; letter-spacing:.16em; font-size:.66rem;
@@ -152,15 +126,11 @@ st.markdown(
       .section-kicker::before {
         content:""; width:18px; height:1px; background:linear-gradient(90deg,var(--cyan),transparent);
       }
-
       [data-testid="stMetric"], .metric-card {
         position:relative;
         background:linear-gradient(160deg, rgba(14,24,44,.85), rgba(6,12,26,.75));
-        border:1px solid var(--line);
-        padding:1rem 1.05rem;
-        border-radius:10px;
-        backdrop-filter:blur(10px);
-        overflow:hidden;
+        border:1px solid var(--line); padding:1rem 1.05rem; border-radius:10px;
+        backdrop-filter:blur(10px); overflow:hidden;
       }
       [data-testid="stMetric"]::before, .metric-card::before {
         content:""; position:absolute; top:0; left:0; width:34px; height:2px;
@@ -181,37 +151,26 @@ st.markdown(
         background:var(--cyan); box-shadow:0 0 8px var(--cyan);
       }
       .metric-value {
-        color:#f5fbff;
-        font-family:'Orbitron',sans-serif; font-weight:600;
-        font-size:1.85rem; margin-top:.45rem;
-        text-shadow:0 0 22px rgba(0,243,255,.28);
+        color:#f5fbff; font-family:'Orbitron',sans-serif; font-weight:600;
+        font-size:1.85rem; margin-top:.45rem; text-shadow:0 0 22px rgba(0,243,255,.28);
       }
       .metric-note, .small-muted { color:var(--muted); font-size:.78rem; margin-top:.3rem; }
-
       [data-testid="stMetricLabel"] { color:var(--muted) !important; font-family:'Rajdhani',sans-serif; letter-spacing:.06em; text-transform:uppercase; }
       [data-testid="stMetricValue"] { color:#f5fbff !important; font-family:'Orbitron',sans-serif; }
-
       .info-panel {
         background:linear-gradient(160deg, rgba(14,24,44,.72), rgba(6,12,26,.68));
-        border:1px solid var(--line);
-        padding:1rem 1.15rem;
-        border-radius:10px;
+        border:1px solid var(--line); padding:1rem 1.15rem; border-radius:10px;
         backdrop-filter:blur(10px);
       }
       [data-testid="stExpander"] {
         border:1px solid var(--line); border-radius:10px;
         background:rgba(10,17,32,.55); backdrop-filter:blur(8px);
       }
-
       .stButton button, .stDownloadButton button {
-        border-radius:8px;
-        border:1px solid var(--line-hi);
+        border-radius:8px; border:1px solid var(--line-hi);
         background:linear-gradient(180deg, rgba(0,243,255,.10), rgba(0,243,255,.04));
-        color:#eafdff;
-        font-family:'Rajdhani',sans-serif;
-        font-weight:600; letter-spacing:.05em;
-        min-height:2.4rem;
-        transition:all .22s ease;
+        color:#eafdff; font-family:'Rajdhani',sans-serif; font-weight:600;
+        letter-spacing:.05em; min-height:2.4rem; transition:all .22s ease;
         text-transform:uppercase; font-size:.85rem;
       }
       .stButton button[kind="primary"] {
@@ -220,12 +179,9 @@ st.markdown(
         box-shadow:0 0 18px rgba(0,243,255,.35);
       }
       .stButton button:hover, .stDownloadButton button:hover {
-        border-color:#9af5ff;
-        box-shadow:0 0 20px rgba(0,243,255,.35);
-        transform:translateY(-1px);
+        border-color:#9af5ff; box-shadow:0 0 20px rgba(0,243,255,.35); transform:translateY(-1px);
       }
       .stDownloadButton button { background:rgba(0,243,255,.14); color:#f0fdff; font-weight:600; }
-
       div[data-baseweb="select"] > div,
       .stTextInput input, .stNumberInput input, .stTextArea textarea {
         background:rgba(9,15,28,.9) !important;
@@ -233,46 +189,34 @@ st.markdown(
         color:var(--text) !important;
       }
       [data-testid="stFileUploader"] section {
-        background:rgba(9,15,28,.7);
-        border:1px dashed rgba(0,243,255,.42);
-        border-radius:10px;
+        background:rgba(9,15,28,.7); border:1px dashed rgba(0,243,255,.42); border-radius:10px;
       }
       [data-testid="stFileUploader"] section:hover { border-color:var(--cyan); }
-
       div[data-testid="stDataFrame"] {
-        border:1px solid var(--line);
-        border-radius:10px; overflow:hidden;
+        border:1px solid var(--line); border-radius:10px; overflow:hidden;
         background:rgba(6,12,26,.6);
       }
-
       .warning-badge {
-        display:inline-block;
-        border:1px solid rgba(255,157,77,.55);
-        background:rgba(255,157,77,.12);
-        color:#ffc38d; border-radius:6px;
+        display:inline-block; border:1px solid rgba(255,157,77,.55);
+        background:rgba(255,157,77,.12); color:#ffc38d; border-radius:6px;
         padding:3px 9px; font-size:.72rem;
         font-family:'Rajdhani',sans-serif; letter-spacing:.06em;
       }
       .hud-status {
         display:inline-flex; align-items:center; gap:.4rem;
-        border:1px solid var(--line-hi);
-        background:rgba(0,243,255,.06);
+        border:1px solid var(--line-hi); background:rgba(0,243,255,.06);
         padding:4px 10px; border-radius:999px;
         font-family:'Rajdhani',sans-serif; font-size:.72rem;
-        letter-spacing:.12em; text-transform:uppercase;
-        color:var(--cyan);
+        letter-spacing:.12em; text-transform:uppercase; color:var(--cyan);
       }
       .hud-status::before {
         content:""; width:7px; height:7px; border-radius:50%;
         background:var(--cyan); box-shadow:0 0 8px var(--cyan);
         animation:pulseDot 1.8s ease-in-out infinite;
       }
-
       .brand {
-        font-family:'Orbitron',sans-serif; font-weight:700;
-        font-size:1.15rem; letter-spacing:.06em;
-        color:#eaf6ff;
-        display:flex; align-items:center; gap:.5rem;
+        font-family:'Orbitron',sans-serif; font-weight:700; font-size:1.15rem;
+        letter-spacing:.06em; color:#eaf6ff; display:flex; align-items:center; gap:.5rem;
       }
       .brand .dot {
         width:9px; height:9px; border-radius:50%;
@@ -280,17 +224,13 @@ st.markdown(
       }
       .sidebar-hud {
         font-family:'Rajdhani',sans-serif; font-size:.74rem;
-        letter-spacing:.12em; color:var(--muted);
-        text-transform:uppercase;
+        letter-spacing:.12em; color:var(--muted); text-transform:uppercase;
       }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-# -----------------------------------------------------------------------------
-# Layered Canvas star-field
-# -----------------------------------------------------------------------------
 components.html(
     """
     <script>
@@ -313,7 +253,6 @@ components.html(
       }
       resize();
       parent.addEventListener('resize', resize);
-
       const layers = [
         { count: 140, speed: 0.018, sizeMin: 0.4, sizeMax: 1.1, alpha: 0.55 },
         { count:  70, speed: 0.045, sizeMin: 0.7, sizeMax: 1.6, alpha: 0.8  },
@@ -335,7 +274,6 @@ components.html(
           });
         }
       });
-
       const shooters = [];
       function spawnShooter() {
         if (shooters.length < 2 && Math.random() < 0.35) {
@@ -347,15 +285,12 @@ components.html(
           });
         }
       }
-
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       let t0 = performance.now();
-
       function frame(now) {
         const dt = Math.min(60, now - t0) / 1000;
         t0 = now;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-
         for (const s of stars) {
           if (!reduceMotion) {
             s.y += s.s * dt;
@@ -370,15 +305,13 @@ components.html(
           ctx.fill();
         }
         ctx.globalAlpha = 1;
-
         for (let i = shooters.length - 1; i >= 0; i--) {
           const sh = shooters[i];
           sh.x += sh.vx; sh.y += sh.vy; sh.life++;
           const grad = ctx.createLinearGradient(sh.x, sh.y, sh.x - 90, sh.y - 30);
           grad.addColorStop(0, 'rgba(234,246,255,0.95)');
           grad.addColorStop(1, 'rgba(0,243,255,0)');
-          ctx.strokeStyle = grad;
-          ctx.lineWidth = 1.6;
+          ctx.strokeStyle = grad; ctx.lineWidth = 1.6;
           ctx.beginPath();
           ctx.moveTo(sh.x, sh.y);
           ctx.lineTo(sh.x - 90, sh.y - 30);
@@ -386,7 +319,6 @@ components.html(
           if (sh.life > sh.max) shooters.splice(i, 1);
         }
         spawnShooter();
-
         requestAnimationFrame(frame);
       }
       requestAnimationFrame(frame);
@@ -396,9 +328,6 @@ components.html(
     height=0,
 )
 
-# -----------------------------------------------------------------------------
-# Plotly theme
-# -----------------------------------------------------------------------------
 PLOT_LAYOUT = dict(
     paper_bgcolor="rgba(0,0,0,0)",
     plot_bgcolor="rgba(4,9,20,0.35)",
@@ -416,20 +345,14 @@ CLASS_COLORS = {"STAR":"#5b8bff", "QSO":"#a78bfa", "QUASAR":"#a78bfa",
 ANOMALY_COLOR = "#ff9d4d"
 GRID_COLOR = "rgba(120,180,255,.08)"
 AXIS_LINE = "rgba(120,180,255,.30)"
-
 PLOTLY_TEMPLATE = go.layout.Template(layout=go.Layout(
     **PLOT_LAYOUT,
-    xaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False,
-               showline=True, linecolor=AXIS_LINE),
-    yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False,
-               showline=True, linecolor=AXIS_LINE),
+    xaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False, showline=True, linecolor=AXIS_LINE),
+    yaxis=dict(showgrid=True, gridcolor=GRID_COLOR, zeroline=False, showline=True, linecolor=AXIS_LINE),
 ))
 px.defaults.template = PLOTLY_TEMPLATE
 
 
-# =============================================================================
-# BACKEND LOGIC
-# =============================================================================
 def add_colour_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     pairs = [("u_g", "mag_u", "mag_g"), ("g_r", "mag_g", "mag_r"),
@@ -461,6 +384,7 @@ COLUMN_ALIASES = {
     "i_z": ["i-z", "i_minus_z", "i_z_color", "i_z_colour"],
 }
 
+
 def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     df.columns = [str(c).replace("\ufeff", "").strip() for c in df.columns]
@@ -484,7 +408,8 @@ def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
         df = df.rename(columns=rename)
     return df
 
-def validate_photometry_input(df: pd.DataFrame) -> tuple[bool, str]:
+
+def validate_photometry_input(df: pd.DataFrame):
     df = standardize_column_names(df)
     df = add_colour_features(df)
     feature_candidates = ["u_g", "g_r", "r_i", "i_z", "mag_g", "z"]
@@ -495,11 +420,12 @@ def validate_photometry_input(df: pd.DataFrame) -> tuple[bool, str]:
             if values.notna().sum() >= 2 and values.nunique(dropna=True) > 1:
                 usable.append(col)
     if len(df) < 5:
-        return False, "Please upload at least 5 rows. Very small datasets cannot support meaningful anomaly ranking."
+        return False, "Please upload at least 5 rows."
     if len(usable) < 2:
         expected = "mag_u, mag_g, mag_r, mag_i, mag_z and/or colour columns u_g, g_r, r_i, i_z; redshift z is optional."
         return False, f"I could not identify at least two usable photometry features. Expected {expected}"
     return True, f"Recognized {len(usable)} usable model features: {', '.join(usable)}."
+
 
 def find_column(df: pd.DataFrame, options):
     lower_map = {str(c).lower(): c for c in df.columns}
@@ -558,18 +484,15 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         class_col = "class"
     else:
         df["class"] = normalize_class(df[class_col])
-
     feature_candidates = ["u_g", "g_r", "r_i", "i_z", "mag_g", "z"]
     features = [c for c in feature_candidates if c in df.columns]
     if len(features) < 2:
-        raise ValueError("At least two supported numeric features are needed. Provide SDSS magnitudes (mag_u, mag_g, mag_r, mag_i, mag_z) and/or colour columns (u_g, g_r, r_i, i_z).")
-
+        raise ValueError("At least two supported numeric features are needed.")
     matrix = df[features].apply(pd.to_numeric, errors="coerce").replace([float("inf"), -float("inf")], float("nan"))
     matrix = matrix.astype("float64")
     for col in matrix.columns:
         median = matrix[col].median()
         matrix[col] = matrix[col].fillna(0.0 if pd.isna(median) else median)
-
     scores = pd.Series(index=df.index, dtype="float64")
     percentiles = pd.Series(index=df.index, dtype="float64")
     for label, idx in df.groupby("class", dropna=False).groups.items():
@@ -582,7 +505,6 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             raw = pd.Series(-model.score_samples(subset), index=idx)
         scores.loc[idx] = raw
         percentiles.loc[idx] = raw.rank(pct=True) * 100.0
-
     df["anomaly_score"] = scores
     df["class_percentile"] = percentiles
     df["model_features"] = ", ".join(features)
@@ -590,10 +512,11 @@ def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
 
 
 @st.cache_data(show_spinner=False, ttl=60 * 60 * 24)
-def fetch_sdss_image(ra: float, dec: float, size: int = 512):
+def fetch_sdss_image(ra, dec, size=512):
     params = urlencode({"ra": float(ra), "dec": float(dec), "scale": 0.4,
                         "width": int(size), "height": int(size), "opt": "G"})
-    request = Request(f"{SDSS_BASE}?{params}", headers={"User-Agent": "AstroSignal/1.0 (astronomy research prototype)"})
+    request = Request(f"{SDSS_BASE}?{params}",
+                      headers={"User-Agent": "AstroSignal/1.0 (astronomy research prototype)"})
     try:
         with urlopen(request, timeout=8) as response:
             content_type = response.headers.get("Content-Type", "")
@@ -640,13 +563,16 @@ def _add_hover_fields(fig, df):
     return fig
 
 
-def _scatter_class_layers(fig, plot_df, x, y, selected_candidate=None):
+# === END OF PART 1 — continue with PART 2 immediately below in the SAME file ===
+    def _scatter_class_layers(fig, plot_df, x, y, selected_candidate=None):
     if "class" not in plot_df:
         plot_df = plot_df.copy()
         plot_df["class"] = "ALL"
     hover_cols = [c for c in ["candidate_row", "objID", "class", "mag_u", "mag_g",
-                               "mag_r", "mag_i", "mag_z", "u_g", "g_r", "r_i", "i_z",
-                               "anomaly_score", "class_percentile"] if c in plot_df.columns]
+                              "mag_r", "mag_i", "mag_z", "u_g", "g_r", "r_i", "i_z",
+                              "anomaly_score", "class_percentile"] if c in plot_df.columns]
+    ht = "<br>".join([f"{c}: %{{customdata[{i}]}}" for i, c in enumerate(hover_cols)]) + "<extra></extra>"
+    ht_top = "<b>Top-percentile candidate</b><br>" + ht
     for label in sorted(plot_df["class"].astype(str).unique()):
         subset = plot_df[plot_df["class"].astype(str) == label]
         pct = pd.to_numeric(subset.get("class_percentile",
@@ -658,6 +584,7 @@ def _scatter_class_layers(fig, plot_df, x, y, selected_candidate=None):
             fig.add_trace(go.Scattergl(
                 x=norm[x], y=norm[y], mode="markers", name=label,
                 marker=dict(size=4, color=color, opacity=.30),
-                customdata=norm[hover_cols].astype(str).values,
-                hovertemplate="<br>".join([f"{c}: %{{customdata[{i}]}}"
-                                            for i, c in enumerate(h
+                customdata=norm[hover_cols].astype(str).values, hovertemplate=ht))
+        if not anom.empty:
+            fig.add_trace(go.Scattergl(
+                x=anom[x], y=anom[y], mode
