@@ -2,7 +2,6 @@ from pathlib import Path
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from io import BytesIO
-import textwrap
 
 import pandas as pd
 import plotly.express as px
@@ -55,9 +54,6 @@ st.markdown(
       html, body, [class*="css"] { font-family:'Inter',sans-serif; }
       .stApp { background:transparent; color:var(--text); }
 
-      /* ============================================================
-         Base gradient + animated nebula / accretion disk background
-         ============================================================ */
       [data-testid="stAppViewContainer"] {
         background:
           radial-gradient(ellipse 1200px 800px at 15% 10%, rgba(60,110,220,.16), transparent 60%),
@@ -66,7 +62,6 @@ st.markdown(
           linear-gradient(160deg, #03050b 0%, #050814 55%, #03050b 100%);
         position:relative;
       }
-      /* Slowly rotating accretion-disk glow, sits under the star canvas */
       [data-testid="stAppViewContainer"]::after {
         content:"";
         position:fixed; top:50%; left:50%;
@@ -87,26 +82,16 @@ st.markdown(
       }
       @keyframes accretionSpin { to { transform:translate(-50%,-50%) rotate(360deg); } }
 
-      /* Canvas star-field layer from components.html */
-      [data-testid="stAppViewContainer"] .stHtml:first-of-type {
-        position:fixed !important; inset:0 !important;
-        z-index:0; pointer-events:none;
-      }
-
       @media (prefers-reduced-motion: reduce) {
         [data-testid="stAppViewContainer"]::after { animation:none; }
         * { transition:none !important; animation:none !important; }
       }
 
-      /* ============================================================
-         Header / Sidebar / Containers
-         ============================================================ */
       [data-testid="stHeader"] { background:rgba(3,5,11,.7); backdrop-filter:blur(6px); }
       [data-testid="stMainBlockContainer"], [data-testid="stSidebar"] { position:relative; z-index:1; }
 
       [data-testid="stSidebar"] {
-        background:
-          linear-gradient(180deg, rgba(3,6,14,.94), rgba(6,12,24,.94));
+        background:linear-gradient(180deg, rgba(3,6,14,.94), rgba(6,12,24,.94));
         border-right:1px solid var(--line);
         backdrop-filter:blur(18px);
       }
@@ -119,15 +104,11 @@ st.markdown(
       a { color:var(--cyan) !important; }
       code { color:var(--cyan); background:rgba(0,243,255,.08); padding:1px 5px; border-radius:4px; }
 
-      /* ============================================================
-         Hero
-         ============================================================ */
       .hero {
         position:relative; padding:2rem 2.1rem 1.9rem;
         border:1px solid var(--line-hi);
         border-radius:14px;
-        background:
-          linear-gradient(125deg, rgba(14,26,48,.9), rgba(6,12,26,.86));
+        background:linear-gradient(125deg, rgba(14,26,48,.9), rgba(6,12,26,.86));
         backdrop-filter:blur(14px);
         margin-bottom:1.4rem;
         overflow:hidden;
@@ -173,13 +154,9 @@ st.markdown(
         content:""; width:18px; height:1px; background:linear-gradient(90deg,var(--cyan),transparent);
       }
 
-      /* ============================================================
-         Metric / HUD cards
-         ============================================================ */
       [data-testid="stMetric"], .metric-card {
         position:relative;
-        background:
-          linear-gradient(160deg, rgba(14,24,44,.85), rgba(6,12,26,.75));
+        background:linear-gradient(160deg, rgba(14,24,44,.85), rgba(6,12,26,.75));
         border:1px solid var(--line);
         padding:1rem 1.05rem;
         border-radius:10px;
@@ -215,9 +192,6 @@ st.markdown(
       [data-testid="stMetricLabel"] { color:var(--muted) !important; font-family:'Rajdhani',sans-serif; letter-spacing:.06em; text-transform:uppercase; }
       [data-testid="stMetricValue"] { color:#f5fbff !important; font-family:'Orbitron',sans-serif; }
 
-      /* ============================================================
-         Panels / Info boxes
-         ============================================================ */
       .info-panel {
         background:linear-gradient(160deg, rgba(14,24,44,.72), rgba(6,12,26,.68));
         border:1px solid var(--line);
@@ -230,9 +204,6 @@ st.markdown(
         background:rgba(10,17,32,.55); backdrop-filter:blur(8px);
       }
 
-      /* ============================================================
-         Buttons
-         ============================================================ */
       .stButton button, .stDownloadButton button {
         border-radius:8px;
         border:1px solid var(--line-hi);
@@ -256,9 +227,6 @@ st.markdown(
       }
       .stDownloadButton button { background:rgba(0,243,255,.14); color:#f0fdff; font-weight:600; }
 
-      /* ============================================================
-         Inputs
-         ============================================================ */
       div[data-baseweb="select"] > div,
       .stTextInput input, .stNumberInput input, .stTextArea textarea {
         background:rgba(9,15,28,.9) !important;
@@ -272,18 +240,12 @@ st.markdown(
       }
       [data-testid="stFileUploader"] section:hover { border-color:var(--cyan); }
 
-      /* ============================================================
-         Tables
-         ============================================================ */
       div[data-testid="stDataFrame"] {
         border:1px solid var(--line);
         border-radius:10px; overflow:hidden;
         background:rgba(6,12,26,.6);
       }
 
-      /* ============================================================
-         Badges / Status chips
-         ============================================================ */
       .warning-badge {
         display:inline-block;
         border:1px solid rgba(255,157,77,.55);
@@ -307,7 +269,6 @@ st.markdown(
         animation:pulseDot 1.8s ease-in-out infinite;
       }
 
-      /* Sidebar brand */
       .brand {
         font-family:'Orbitron',sans-serif; font-weight:700;
         font-size:1.15rem; letter-spacing:.06em;
@@ -330,7 +291,6 @@ st.markdown(
 
 # -----------------------------------------------------------------------------
 # Layered Canvas star-field (parallax stars + occasional shooting stars)
-# Rendered behind the app. Runs once via components.html.
 # -----------------------------------------------------------------------------
 components.html(
     """
@@ -355,7 +315,6 @@ components.html(
       resize();
       parent.addEventListener('resize', resize);
 
-      // Three star layers (parallax drift)
       const layers = [
         { count: 140, speed: 0.018, sizeMin: 0.4, sizeMax: 1.1, alpha: 0.55 },
         { count:  70, speed: 0.045, sizeMin: 0.7, sizeMax: 1.6, alpha: 0.8  },
@@ -378,7 +337,6 @@ components.html(
         }
       });
 
-      // Shooting stars
       const shooters = [];
       function spawnShooter() {
         if (shooters.length < 2 && Math.random() < 0.35) {
@@ -399,7 +357,6 @@ components.html(
         t0 = now;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Draw stars
         for (const s of stars) {
           if (!reduceMotion) {
             s.y += s.s * dt;
@@ -415,7 +372,6 @@ components.html(
         }
         ctx.globalAlpha = 1;
 
-        // Shooting stars
         for (let i = shooters.length - 1; i >= 0; i--) {
           const sh = shooters[i];
           sh.x += sh.vx; sh.y += sh.vy; sh.life++;
@@ -473,7 +429,7 @@ px.defaults.template = PLOTLY_TEMPLATE
 
 
 # =============================================================================
-# BACKEND LOGIC — unchanged from original
+# BACKEND LOGIC
 # =============================================================================
 def add_colour_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -670,4 +626,39 @@ def _valid_plot_rows(df, columns):
         out[col] = pd.to_numeric(out[col], errors="coerce")
     out = out.replace([float("inf"), -float("inf")], float("nan")).dropna(subset=columns)
     for col in columns:
-        out = out[out[col].
+        out = out[out[col].abs() < 9000]
+        if col.startswith("mag_"):
+            out = out[out[col].between(-10, 30)]
+    return out
+
+
+def _add_hover_fields(fig, df):
+    fig.update_layout(template=PLOTLY_TEMPLATE, **PLOT_LAYOUT)
+    fig.update_xaxes(showgrid=True, gridcolor=GRID_COLOR, zeroline=False,
+                     showline=True, linecolor=AXIS_LINE)
+    fig.update_yaxes(showgrid=True, gridcolor=GRID_COLOR, zeroline=False,
+                     showline=True, linecolor=AXIS_LINE)
+    return fig
+
+
+def _scatter_class_layers(fig, plot_df, x, y, selected_candidate=None):
+    if "class" not in plot_df:
+        plot_df = plot_df.copy(); plot_df["class"] = "ALL"
+    hover_cols = [c for c in ["candidate_row", "objID", "class", "mag_u", "mag_g",
+                               "mag_r", "mag_i", "mag_z", "u_g", "g_r", "r_i", "i_z",
+                               "anomaly_score", "class_percentile"] if c in plot_df.columns]
+    for label in sorted(plot_df["class"].astype(str).unique()):
+        subset = plot_df[plot_df["class"].astype(str) == label]
+        pct = pd.to_numeric(subset.get("class_percentile",
+                                        pd.Series(0, index=subset.index)), errors="coerce").fillna(0)
+        norm = subset[pct < 99]
+        anom = subset[pct >= 99]
+        color = CLASS_COLORS.get(label.upper(), "#8fa3bf")
+        if not norm.empty:
+            fig.add_trace(go.Scattergl(
+                x=norm[x], y=norm[y], mode="markers", name=label,
+                marker=dict(size=4, color=color, opacity=.30),
+                customdata=norm[hover_cols].astype(str).values,
+                hovertemplate="<br>".join([f"{c}: %{{customdata[{i}]}}"
+                                            for i, c in enumerate(hover_cols)]) + "<extra></extra>"))
+        if not anom.empty:
