@@ -18,6 +18,7 @@ from sklearn.ensemble import IsolationForest
 
 from anomaly_models import (
     FEATURE_CANDIDATES,
+    add_colour_features,
     build_feature_matrix,
     normalize_class,
     score_all,
@@ -75,6 +76,21 @@ def main(path):
         global_median = pd.to_numeric(df["z"], errors="coerce").median()
         assert abs(star_median - global_median) > 1e-6, \
             "test is not meaningful on this file: class and global medians agree"
+
+    # app.py scores uploaded CSVs through score_all. Those may carry no class
+    # column, and the app plots the colour indices, so both have to survive.
+    classless = df.drop(columns=["class"]) if "class" in df.columns else df
+    unlabelled = score_all(classless)
+    assert len(unlabelled) == len(df), "scoring an unlabelled CSV changed the row count"
+    for col in PERCENTILE_COLUMNS:
+        assert unlabelled[col].between(0, 100).all(), f"{col} out of range without labels"
+    # app.py calls preprocess_dataframe before score_all, so the colour indices
+    # are already on the frame by then. score_all must pass them through rather
+    # than dropping them, because the charts read them off its output.
+    prepared = add_colour_features(df)
+    passed_through = score_all(prepared)
+    for col in ["u_g", "g_r", "r_i", "i_z"]:
+        assert col in passed_through.columns, f"score_all dropped {col}, app.py plots it"
 
     flags = quality_flags(df)
     print(f"rows: {len(df):,}")
