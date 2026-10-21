@@ -112,7 +112,7 @@ def score_per_class(df, fit_score, scale=True, class_column="class"):
     """
     matrix, features = build_feature_matrix(df)
     
-    # Safe handling if dataset lacks a explicit class column (falls back to ALL)
+    # Safe handling if class_column is missing: fall back to ALL
     if class_column in df.columns:
         labels = normalize_class(df[class_column])
     else:
