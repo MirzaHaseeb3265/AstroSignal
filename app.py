@@ -12,7 +12,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 
 # IMPORT YOUR TEAMMATE'S MULTI-MODEL ENGINE
-from anomaly_models import score_all
+from anomaly_models import score_all, build_feature_matrix
 
 # -----------------------------------------------------------------------------
 # AstroSignal — SDSS-inspired astronomy anomaly exploration prototype
@@ -431,7 +431,7 @@ px.defaults.template = PLOTLY_TEMPLATE
 
 
 # =============================================================================
-# BACKEND LOGIC
+# BACKEND LOGIC & PREPROCESSING UTILITIES
 # =============================================================================
 def add_colour_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -487,23 +487,6 @@ def standardize_column_names(df: pd.DataFrame) -> pd.DataFrame:
         df = df.rename(columns=rename)
     return df
 
-def validate_photometry_input(df: pd.DataFrame) -> tuple[bool, str]:
-    df = standardize_column_names(df)
-    df = add_colour_features(df)
-    feature_candidates = ["u_g", "g_r", "r_i", "i_z", "mag_g", "z"]
-    usable = []
-    for col in feature_candidates:
-        if col in df.columns:
-            values = pd.to_numeric(df[col], errors="coerce")
-            if values.notna().sum() >= 2 and values.nunique(dropna=True) > 1:
-                usable.append(col)
-    if len(df) < 5:
-        return False, "Please upload at least 5 rows. Very small datasets cannot support meaningful anomaly ranking."
-    if len(usable) < 2:
-        expected = "mag_u, mag_g, mag_r, mag_i, mag_z and/or colour columns u_g, g_r, r_i, i_z; redshift z is optional."
-        return False, f"I could not identify at least two usable photometry features. Expected {expected}"
-    return True, f"Recognized {len(usable)} usable model features: {', '.join(usable)}."
-
 def find_column(df: pd.DataFrame, options):
     lower_map = {str(c).lower(): c for c in df.columns}
     for option in options:
@@ -511,17 +494,14 @@ def find_column(df: pd.DataFrame, options):
             return lower_map[option.lower()]
     return None
 
-
 def ensure_candidate_ids(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
     if "candidate_row" not in df.columns:
         df["candidate_row"] = range(1, len(df) + 1)
     return df
 
-
 def normalize_class(series: pd.Series) -> pd.Series:
     return series.fillna("UNKNOWN").astype(str).str.upper().str.strip()
-
 
 def quality_flags(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
@@ -538,10 +518,21 @@ def quality_flags(df: pd.DataFrame) -> pd.DataFrame:
             df["dq_negative_z"] = False
     return df
 
+def preprocess_dataframe(df: pd.DataFrame) -> pd.DataFrame:
+    """Unified preprocessing pipeline for both default data and uploads."""
+    df = standardize_column_names(df)
+    df = add_colour_features(df)
+    df = ensure_candidate_ids(df)
+    df = quality_flags(df)
+    class_col = find_column(df, ["class", "object_class", "type"])
+    if class_col:
+        df["class"] = normalize_class(df[class_col])
+    else:
+        df["class"] = "ALL"
+    return df
 
 def get_percentile_column(df: pd.DataFrame):
     return find_column(df, ["class_percentile", "anomaly_percentile", "percentile", "anomaly_rank_percentile"])
-
 
 def get_score_column(df: pd.DataFrame):
     return find_column(df, ["anomaly_score", "score", "anomaly"])
@@ -836,13 +827,8 @@ def show_candidate_inspector(row: pd.Series, source_label="SDSS DR17"):
 
 @st.cache_data(show_spinner=False)
 def load_default_data(path_string: str, modified_time: float):
-    df = standardize_column_names(pd.read_csv(path_string))
-    df = add_colour_features(df)
-    df = ensure_candidate_ids(df)
-    df = quality_flags(df)
-    class_col = find_column(df, ["class", "object_class", "type"])
-    if class_col:
-        df["class"] = normalize_class(df[class_col])
+    df = pd.read_csv(path_string)
+    df = preprocess_dataframe(df)
     
     # Automatically compute multi-model scores using teammate's engine if missing
     if "if_percentile" not in df.columns or "lof_percentile" not in df.columns:
@@ -1060,7 +1046,6 @@ else:  # Upload & analyze
                     st.info("Applied column mappings: " + ", ".join(f"{src} → {dst}" for src, dst in rename_map.items()))
             
             # Basic validation check using helper from teammate's anomaly models framework
-            from anomaly_models import build_feature_matrix
             try:
                 build_feature_matrix(uploaded_df)
                 valid = len(uploaded_df) >= 5
@@ -1077,8 +1062,9 @@ else:  # Upload & analyze
             if st.button("Run Multi-Model Analysis (IF, LOF, OCSVM)", type="primary", disabled=not valid):
                 with st.spinner("Fitting Isolation Forest, Local Outlier Factor, and One-Class SVM models per class…"):
                     try:
-                        # RUN TEAMMATE'S MULTI-MODEL SCORING FUNCTION
-                        result = score_all(uploaded_df)
+                        # Preprocess uploaded dataset completely using pipeline first
+                        processed_df = preprocess_dataframe(uploaded_df)
+                        result = score_all(processed_df)
                         st.session_state.uploaded_analysis = result
                         st.success("Multi-model analysis complete! All detectors have scored the dataset.")
                     except Exception as exc:
