@@ -111,7 +111,12 @@ def score_per_class(df, fit_score, scale=True, class_column="class"):
     Returns (scores, percentiles, feature_names).
     """
     matrix, features = build_feature_matrix(df)
-    labels = normalize_class(df[class_column])
+    
+    # Safe handling if dataset lacks a explicit class column (falls back to ALL)
+    if class_column in df.columns:
+        labels = normalize_class(df[class_column])
+    else:
+        labels = pd.Series("ALL", index=df.index)
 
     scores = pd.Series(index=df.index, dtype="float64")
     percentiles = pd.Series(index=df.index, dtype="float64")
