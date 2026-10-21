@@ -8,7 +8,53 @@ Built for the Open Scientific Intelligence hackathon.
 
 ## Data
 
-Source: SDSS DR17 catalogue data, pulled through SkyServer SQL Search.
+Source: SDSS DR17 catalogue data, pulled through SkyServer SQL Search. The
+exact query used to produce `data/sample.csv`:
+
+```sql
+SELECT TOP 5000
+    objID,
+    ra,
+    dec,
+    psfMag_u - extinction_u AS mag_u,
+    psfMag_g - extinction_g AS mag_g,
+    psfMag_r - extinction_r AS mag_r,
+    psfMag_i - extinction_i AS mag_i,
+    psfMag_z - extinction_z AS mag_z,
+    class,
+    z
+FROM SpecPhoto
+WHERE class IN ('GALAXY', 'STAR', 'QSO')
+    AND psfMag_g BETWEEN 12 AND 25
+    AND psfMag_r BETWEEN 12 AND 25
+    AND psfMag_u IS NOT NULL
+    AND psfMag_g IS NOT NULL
+    AND psfMag_r IS NOT NULL
+    AND psfMag_i IS NOT NULL
+    AND psfMag_z IS NOT NULL
+```
+
+Three things this query decides, which matter when reading any result below.
+
+Magnitudes are PSF magnitudes, corrected for galactic extinction. PSF
+magnitudes fit a point source profile, so they are the right measurement for
+stars and quasars and they underestimate the flux of galaxies, which are
+extended. Since 85 percent of this sample is galaxies, every galaxy colour
+here carries that systematic. Model or Petrosian magnitudes would be the
+usual choice for extended sources.
+
+The table is `SpecPhoto`, so every object has a spectrum. That is why `class`
+and `z` are spectroscopic rather than photometric estimates, and it also
+means the sample inherits SDSS spectroscopic target selection, which is not a
+uniform sample of the sky.
+
+`TOP 5000` has no `ORDER BY`, so this is the first 5,000 rows the server
+returned, not a random draw. The result is a contiguous block: 55 degrees of
+right ascension but only 2.5 degrees of declination, a narrow equatorial
+strip. Consecutive objects sit about 0.004 degrees apart in right ascension.
+
+The export timestamp was not recorded. The release is DR17 per the project
+plan, though the query text itself does not pin it.
 
 The working file holds 5,000 objects with these columns:
 
@@ -239,11 +285,24 @@ baseline to show why one model on its own is not enough.
   rather than proof.
 - The sky coverage is a narrow strip, so selection effects are present and
   anything flagged may reflect them rather than anything physical.
+- Galaxy photometry uses PSF magnitudes, which systematically underestimate
+  the flux of extended sources. Four of the six model features are colours
+  built from those magnitudes, so galaxy colours carry a systematic offset
+  that a model or Petrosian magnitude would not have. Per-class fitting
+  absorbs part of this, since every galaxy is compared with other galaxies,
+  but it is a real property of the input rather than of the sky.
+- The sample comes from SpecPhoto, so every object was selected for
+  spectroscopy by SDSS targeting rules. It is a sample of what SDSS chose to
+  observe, not of what is out there.
+- `TOP 5000` with no `ORDER BY` means the rows are whatever the server
+  returned first, so this is a contiguous block of the catalogue rather than a
+  random sample. Any distribution here reflects that block.
 
 ## Data citation
 
 SDSS data must be cited according to the collaboration's guidance at
 https://www.sdss.org/collaboration/citing-sdss/
 
-TODO before submission: record the exact SkyServer SQL query, the data release,
-and the export timestamp used to produce the working file.
+The query above is recorded for reproducibility. The export timestamp was not
+captured at the time and the query text does not name a data release, so both
+are stated from the project plan rather than from the export itself.
