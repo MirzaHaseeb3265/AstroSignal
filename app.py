@@ -8,9 +8,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
 import streamlit.components.v1 as components
-from sklearn.ensemble import IsolationForest
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
+
+# IMPORT YOUR TEAMMATE'S MULTI-MODEL ENGINE
+from anomaly_models import score_all
 
 # -----------------------------------------------------------------------------
 # AstroSignal — SDSS-inspired astronomy anomaly exploration prototype
@@ -545,51 +547,6 @@ def get_score_column(df: pd.DataFrame):
     return find_column(df, ["anomaly_score", "score", "anomaly"])
 
 
-def score_dataframe(df: pd.DataFrame) -> pd.DataFrame:
-    df = standardize_column_names(df)
-    valid, message = validate_photometry_input(df)
-    if not valid:
-        raise ValueError(message)
-    df = add_colour_features(df)
-    df = ensure_candidate_ids(df)
-    df = quality_flags(df)
-    class_col = find_column(df, ["class", "object_class", "type"])
-    if class_col is None:
-        df["class"] = "ALL"
-        class_col = "class"
-    else:
-        df["class"] = normalize_class(df[class_col])
-
-    feature_candidates = ["u_g", "g_r", "r_i", "i_z", "mag_g", "z"]
-    features = [c for c in feature_candidates if c in df.columns]
-    if len(features) < 2:
-        raise ValueError("At least two supported numeric features are needed. Provide SDSS magnitudes (mag_u, mag_g, mag_r, mag_i, mag_z) and/or colour columns (u_g, g_r, r_i, i_z).")
-
-    matrix = df[features].apply(pd.to_numeric, errors="coerce").replace([float("inf"), -float("inf")], float("nan"))
-    matrix = matrix.astype("float64")
-    for col in matrix.columns:
-        median = matrix[col].median()
-        matrix[col] = matrix[col].fillna(0.0 if pd.isna(median) else median)
-
-    scores = pd.Series(index=df.index, dtype="float64")
-    percentiles = pd.Series(index=df.index, dtype="float64")
-    for label, idx in df.groupby("class", dropna=False).groups.items():
-        subset = matrix.loc[idx]
-        if len(subset) < 5:
-            raw = pd.Series(0.0, index=idx)
-        else:
-            model = IsolationForest(n_estimators=300, contamination="auto", random_state=42)
-            model.fit(subset)
-            raw = pd.Series(-model.score_samples(subset), index=idx)
-        scores.loc[idx] = raw
-        percentiles.loc[idx] = raw.rank(pct=True) * 100.0
-
-    df["anomaly_score"] = scores
-    df["class_percentile"] = percentiles
-    df["model_features"] = ", ".join(features)
-    return df.sort_values("class_percentile", ascending=False).reset_index(drop=True)
-
-
 @st.cache_data(show_spinner=False, ttl=60 * 60 * 24)
 def fetch_sdss_image(ra: float, dec: float, size: int = 512) -> bytes | None:
     params = urlencode({"ra": float(ra), "dec": float(dec), "scale": 0.4,
@@ -718,7 +675,7 @@ def make_score_histogram(df: pd.DataFrame, height=420):
     threshold = pd.to_numeric(work.loc[pd.to_numeric(work.get("class_percentile", pd.Series(0, index=work.index)), errors="coerce").ge(99), score_col], errors="coerce")
     if not threshold.empty:
         fig.add_vline(x=float(threshold.min()), line_dash="dash", line_color=ANOMALY_COLOR, annotation_text="99th-percentile review boundary", annotation_position="top right")
-    fig.update_layout(title=dict(text="Anomaly-score distribution by class", x=0), barmode="overlay", height=height, xaxis_title="Isolation Forest anomaly score (higher = more unusual)", yaxis_title="Objects")
+    fig.update_layout(title=dict(text="Anomaly-score distribution by class", x=0), barmode="overlay", height=height, xaxis_title="Anomaly score (higher = more unusual)", yaxis_title="Objects")
     _add_hover_fields(fig, work)
     st.plotly_chart(fig, use_container_width=True, config={"displaylogo": False})
     st.caption("How to read this: score shapes show how model scores vary by class; the dashed line is a review boundary estimated from the top-percentile candidates, not a probability cutoff.")
@@ -886,6 +843,10 @@ def load_default_data(path_string: str, modified_time: float):
     class_col = find_column(df, ["class", "object_class", "type"])
     if class_col:
         df["class"] = normalize_class(df[class_col])
+    
+    # Automatically compute multi-model scores using teammate's engine if missing
+    if "if_percentile" not in df.columns or "lof_percentile" not in df.columns:
+        df = score_all(df)
     return df
 
 
@@ -897,9 +858,18 @@ with st.sidebar:
     st.markdown('<div class="sidebar-hud">Mission Telemetry v2.4</div>', unsafe_allow_html=True)
     st.markdown("---")
     page = st.radio("Navigate", ["Mission overview", "Discover candidates", "Upload & analyze"], label_visibility="collapsed")
+    
+    st.markdown("---")
+    st.markdown("**Model Control Panel**")
+    active_model = st.selectbox(
+        "Active Detection Engine",
+        ["Isolation Forest", "Local Outlier Factor (LOF)", "One-Class SVM"],
+        help="Switch between the three ML anomaly models powering metrics, percentiles, and charts."
+    )
+
     st.markdown("---")
     st.markdown("**Project status**")
-    st.caption("Prototype · SDSS photometry · Isolation Forest")
+    st.caption("Prototype · Multi-Model SDSS Photometry")
     st.markdown("---")
     st.caption("Built to prioritize objects for human investigation — not to certify discoveries.")
 
@@ -908,9 +878,9 @@ def render_header():
     st.markdown(
         """
         <div class="hero">
-          <div class="eyebrow">Survey data · Machine learning · Human investigation</div>
+          <div class="eyebrow">Survey data · Multi-Model AI · Human investigation</div>
           <h1>Find the unusual.<br>Investigate the evidence.</h1>
-          <p>AstroSignal ranks astronomical objects whose photometric measurements look unusual relative to similar objects. Explore the measurements, inspect genuine survey images when available, and follow each candidate back to SDSS.</p>
+          <p>AstroSignal ranks astronomical objects whose photometric measurements look unusual. Use the sidebar model selector to switch between Isolation Forest, LOF, and One-Class SVM analytics in real-time.</p>
         </div>
         """,
         unsafe_allow_html=True,
@@ -924,6 +894,21 @@ if DATA_FILE.exists():
         base_df = load_default_data(str(DATA_FILE), DATA_FILE.stat().st_mtime)
     except Exception as exc:
         load_error = str(exc)
+
+# MAP USER'S MODEL SELECTION TO THE CORRESPONDING COLUMNS
+if base_df is not None:
+    if "if_percentile" not in base_df.columns:
+        base_df = score_all(base_df)
+        
+    if active_model == "Isolation Forest":
+        base_df["anomaly_score"] = base_df["if_score"]
+        base_df["class_percentile"] = base_df["if_percentile"]
+    elif active_model == "Local Outlier Factor (LOF)":
+        base_df["anomaly_score"] = base_df["lof_score"]
+        base_df["class_percentile"] = base_df["lof_percentile"]
+    else:
+        base_df["anomaly_score"] = base_df["ocsvm_score"]
+        base_df["class_percentile"] = base_df["ocsvm_percentile"]
 
 if page == "Mission overview":
     render_header()
@@ -941,10 +926,10 @@ if page == "Mission overview":
         c1, c2, c3, c4 = st.columns(4)
         with c1: metric_card("Objects in table", f"{rows:,}", "Saved SDSS photometry sample")
         with c2: metric_card("Object classes", str(n_classes), "Classes represented in data")
-        with c3: metric_card("Top-percentile candidates", f"{n_review:,}" if isinstance(n_review, int) else str(n_review), "At or above 99th percentile")
+        with c3: metric_card("Top-percentile candidates", f"{n_review:,}" if isinstance(n_review, int) else str(n_review), f"At/above 99th %ile ({active_model})")
         with c4: metric_card("QC flags", f"{flags:,}", "Review indicators, not automatic rejections")
         st.markdown("### Featured candidates")
-        st.markdown('<p class="small-muted">A short shortlist keeps the starting view focused. Open Discover to filter and inspect the full table.</p>', unsafe_allow_html=True)
+        st.markdown(f'<p class="small-muted">Showing top shortlist ranked by <b>{active_model}</b>.</p>', unsafe_allow_html=True)
         if percentile_col:
             featured = base_df.copy()
             featured[percentile_col] = pd.to_numeric(featured[percentile_col], errors="coerce")
@@ -961,7 +946,7 @@ if page == "Mission overview":
     a, b, c = st.columns(3)
     with a:
         st.markdown("**01 · Rank**")
-        st.write("The model finds objects that differ from others in their class across the selected photometric features.")
+        st.write("Models evaluate objects that differ from others in their class across selected photometric metrics.")
     with b:
         st.markdown("**02 · Inspect**")
         st.write("Use colour–colour plots, measurements, and available SDSS cutouts to understand why an object stands out.")
@@ -983,7 +968,7 @@ elif page == "Discover candidates":
             df["class_percentile"] = pd.to_numeric(df[pcol], errors="coerce")
         if scol and scol != "anomaly_score":
             df["anomaly_score"] = pd.to_numeric(df[scol], errors="coerce")
-        st.markdown("### Candidate search")
+        st.markdown(f"### Candidate search ({active_model})")
         with st.container(border=True):
             f1, f2, f3 = st.columns([1, 1, 1.25])
             classes = sorted(df["class"].dropna().astype(str).unique()) if "class" in df.columns else []
@@ -1012,7 +997,7 @@ elif page == "Discover candidates":
         sort_col = "class_percentile" if "class_percentile" in filtered.columns else ("anomaly_score" if "anomaly_score" in filtered.columns else None)
         if sort_col:
             filtered = filtered.sort_values(sort_col, ascending=False)
-        st.markdown(f'<div class="hud-status">Telemetry Match: {len(filtered):,} / {len(df):,} objects</div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="hud-status">Telemetry Match: {len(filtered):,} / {len(df):,} objects ({active_model})</div>', unsafe_allow_html=True)
         table_cols = [c for c in ["candidate_row", "class", "class_percentile", "anomaly_score", "ra", "dec", "dq_extreme_color", "dq_negative_z"] if c in filtered.columns]
         st.dataframe(filtered[table_cols].head(1000), hide_index=True, use_container_width=True)
         if len(filtered) > 1000:
@@ -1028,8 +1013,8 @@ elif page == "Discover candidates":
         else:
             st.info("No objects match these filters. Try lowering the percentile threshold or changing the class selection.")
         st.markdown("---")
-        st.markdown("### Scientific visual exploration")
-        st.caption("Use the original astronomy measurements alongside model rankings. Colour indicates relative anomaly percentile where available; it is not a discovery probability.")
+        st.markdown(f"### Scientific visual exploration ({active_model})")
+        st.caption(f"Visualizing results using **{active_model}**. Orange rings highlight objects at or above the 99th percentile.")
         chart1, chart2 = st.columns(2)
         with chart1:
             make_colour_colour_chart(df)
@@ -1041,12 +1026,12 @@ elif page == "Discover candidates":
         with chart4:
             make_pca_chart(df)
         make_sky_position_chart(df, selected_candidate=filtered.loc[selected_idx].get("candidate_row") if not filtered.empty else None)
-        st.download_button("Download filtered candidates as CSV", data=filtered.to_csv(index=False).encode("utf-8"), file_name="astrosignal_filtered_candidates.csv", mime="text/csv")
+        st.download_button(f"Download filtered candidates ({active_model}) as CSV", data=filtered.to_csv(index=False).encode("utf-8"), file_name=f"astrosignal_filtered_{active_model.lower().replace(' ', '_')}.csv", mime="text/csv")
 
 else:  # Upload & analyze
     render_header()
-    st.markdown("### Analyze another astronomy CSV")
-    st.markdown('<div class="info-panel"><b>Supported input</b><br><span class="small-muted">Best supported: SDSS-style photometry with mag_u, mag_g, mag_r, mag_i, mag_z and optional z, class, ra, dec. You may instead provide colour indices u_g, g_r, r_i, i_z. Common aliases such as modelMag_g, psfMag_g, redshift, right_ascension and declination are recognized. Column aliases do not convert units or make a different survey scientifically equivalent.</span></div>', unsafe_allow_html=True)
+    st.markdown("### Analyze another astronomy CSV (Multi-Model Engine)")
+    st.markdown('<div class="info-panel"><b>Supported input</b><br><span class="small-muted">Best supported: SDSS-style photometry with mag_u, mag_g, mag_r, mag_i, mag_z and optional z, class, ra, dec. When you run analysis, all three models (Isolation Forest, LOF, and One-Class SVM) will be computed simultaneously.</span></div>', unsafe_allow_html=True)
     uploaded = st.file_uploader("Upload a CSV file", type=["csv"])
     if uploaded is not None:
         try:
@@ -1073,17 +1058,29 @@ else:  # Upload & analyze
                 uploaded_df = uploaded_df.rename(columns=rename_map)
                 if rename_map:
                     st.info("Applied column mappings: " + ", ".join(f"{src} → {dst}" for src, dst in rename_map.items()))
-            valid, validation_message = validate_photometry_input(uploaded_df)
+            
+            # Basic validation check using helper from teammate's anomaly models framework
+            from anomaly_models import build_feature_matrix
+            try:
+                build_feature_matrix(uploaded_df)
+                valid = len(uploaded_df) >= 5
+                validation_message = "Recognized valid photometry features for multi-model evaluation." if valid else "Please provide at least 5 rows."
+            except Exception as e:
+                valid = False
+                validation_message = str(e)
+
             if valid:
                 st.success(validation_message)
             else:
                 st.warning(validation_message)
-            if st.button("Run anomaly analysis", type="primary", disabled=not valid):
-                with st.spinner("Preparing features and fitting Isolation Forest models by object class…"):
+
+            if st.button("Run Multi-Model Analysis (IF, LOF, OCSVM)", type="primary", disabled=not valid):
+                with st.spinner("Fitting Isolation Forest, Local Outlier Factor, and One-Class SVM models per class…"):
                     try:
-                        result = score_dataframe(uploaded_df)
+                        # RUN TEAMMATE'S MULTI-MODEL SCORING FUNCTION
+                        result = score_all(uploaded_df)
                         st.session_state.uploaded_analysis = result
-                        st.success("Analysis complete. Scores are relative to this uploaded dataset and selected features.")
+                        st.success("Multi-model analysis complete! All detectors have scored the dataset.")
                     except Exception as exc:
                         st.error(f"Could not analyze this CSV: {exc}")
         except Exception as exc:
@@ -1091,15 +1088,26 @@ else:  # Upload & analyze
 
     result = st.session_state.uploaded_analysis
     if result is not None:
+        # Dynamically map active model view for uploaded results too
+        if active_model == "Isolation Forest":
+            result["anomaly_score"] = result["if_score"]
+            result["class_percentile"] = result["if_percentile"]
+        elif active_model == "Local Outlier Factor (LOF)":
+            result["anomaly_score"] = result["lof_score"]
+            result["class_percentile"] = result["lof_percentile"]
+        else:
+            result["anomaly_score"] = result["ocsvm_score"]
+            result["class_percentile"] = result["ocsvm_percentile"]
+
         st.markdown("---")
-        st.markdown("### Analysis results")
+        st.markdown(f"### Analysis results ({active_model})")
         m1, m2, m3 = st.columns(3)
         with m1: st.metric("Objects analyzed", f"{len(result):,}")
         with m2: st.metric("Classes", str(result["class"].nunique()) if "class" in result.columns else "1")
         with m3: st.metric("Objects ≥ 99th percentile", f"{int(result['class_percentile'].ge(99).sum()):,}")
         display_cols = [c for c in ["candidate_row", "class", "class_percentile", "anomaly_score", "ra", "dec", "dq_extreme_color", "dq_negative_z"] if c in result.columns]
         st.dataframe(result[display_cols].head(100), hide_index=True, use_container_width=True)
-        st.caption("The percentile is a within-class ranking for this uploaded dataset, not a probability. Colour and magnitude diagrams show astronomy measurements; PCA is a compressed exploratory view.")
+        st.caption("The percentile is a within-class ranking for this uploaded dataset, not a probability.")
         col_a, col_b = st.columns(2)
         with col_a: make_colour_colour_chart(result)
         with col_b: make_score_histogram(result)
@@ -1109,8 +1117,8 @@ else:  # Upload & analyze
         make_sky_position_chart(result)
         candidate_idx = st.selectbox("Inspect an analyzed candidate", result.index.tolist(), format_func=lambda i: f"Row {result.loc[i].get('candidate_row', i)} · {result.loc[i].get('class', 'Unknown')} · percentile {result.loc[i].get('class_percentile', 0):.2f}")
         show_candidate_inspector(result.loc[candidate_idx], source_label="Uploaded CSV")
-        st.download_button("Download full ranked results", data=result.to_csv(index=False).encode("utf-8"), file_name="astrosignal_ranked_candidates.csv", mime="text/csv")
-        st.markdown('<p class="small-muted">Model note: a separate Isolation Forest is fit within each class when the class column is available. The percentile is a within-class rank, not a probability or a calibrated comparison between classes. Missing numeric feature values are filled with the feature median for this run.</p>', unsafe_allow_html=True)
+        st.download_button("Download full multi-model results", data=result.to_csv(index=False).encode("utf-8"), file_name="astrosignal_multimodel_ranked.csv", mime="text/csv")
+        st.markdown('<p class="small-muted">Model note: models are fit separately within each object class.</p>', unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown('<p class="small-muted">AstroSignal is an exploratory research prototype. Image cutouts are retrieved from SDSS SkyServer when available. Anomaly rankings prioritize review; they do not establish that an object is new, invalid, or scientifically novel.</p>', unsafe_allow_html=True)
