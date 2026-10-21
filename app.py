@@ -1062,7 +1062,7 @@ else:  # Upload & analyze
             if st.button("Run Multi-Model Analysis (IF, LOF, OCSVM)", type="primary", disabled=not valid):
                 with st.spinner("Fitting Isolation Forest, Local Outlier Factor, and One-Class SVM models per class…"):
                     try:
-                        # Preprocess uploaded dataset completely using pipeline first
+                        # Preprocess dataframe first so color features, IDs, flags, and class fallback ('ALL') are present
                         processed_df = preprocess_dataframe(uploaded_df)
                         result = score_all(processed_df)
                         st.session_state.uploaded_analysis = result
